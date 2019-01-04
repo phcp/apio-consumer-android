@@ -21,6 +21,8 @@ open class ApioException(s: String) : Exception(s)
 
 class CantParseToThingException : ApioException("Can't parse to thing")
 
+class InvalidOperationException(operationId: String) : ApioException("Invalid operation $operationId")
+
 class InvalidRequestUrlException : ApioException("Invalid request URL")
 
 class ThingNotFoundException : ApioException("Thing not found")

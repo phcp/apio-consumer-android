@@ -21,6 +21,7 @@ import com.google.gson.reflect.TypeToken
 import com.liferay.apio.consumer.exception.ApioException
 import com.liferay.apio.consumer.exception.CantParseToThingException
 import com.liferay.apio.consumer.cache.ThingsCache
+import com.liferay.apio.consumer.exception.InvalidOperationException
 import com.liferay.apio.consumer.model.*
 import com.liferay.apio.consumer.util.RequestUtil
 import okhttp3.Response
@@ -138,7 +139,7 @@ class ThingParser {
 			attributes: MutableMap<String, Any>, key: String) {
 
 			(this as? Embedded<String, Any>)?.apply {
-				if (this.containsKey("@id")) {
+				if (this.containsKey("@id") && !this.isOperation()) {
 					val result = flatten(this, context)
 
 					result?.let {
@@ -193,13 +194,22 @@ class ThingParser {
 
 		private fun EmbeddedList<*>.hasMapInstances() = !this.filterIsInstance<Map<String, Any>>().isEmpty()
 
+
+		private fun Embedded<*, *>.isOperation(): Boolean {
+			return this["@type"]?.let {
+				parseType(it)
+			}?.let {
+				it.contains("Operation")
+			} ?: false
+		}
+
 		private fun parseOperations(jsonObject: Map<String, Any>): MutableMap<String, Operation> {
 			return jsonObject["operation"]?.let {
 				it as? List<Map<String, Any>>
 			}?.map {
 				val id = it["@id"] as String
-				val target = it["target"] as String
-				val method = it["method"] as String
+				val target = it["target"] as? String ?: throw InvalidOperationException(id)
+				val method = it["method"] as? String ?: throw InvalidOperationException(id)
 				val expects = it["expects"] as? String
 				val type = parseType(it["@type"])
 
