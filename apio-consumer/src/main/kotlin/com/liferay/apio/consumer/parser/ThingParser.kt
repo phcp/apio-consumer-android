@@ -194,9 +194,9 @@ class ThingParser {
 		private fun EmbeddedList<*>.hasMapInstances() = !this.filterIsInstance<Map<String, Any>>().isEmpty()
 
 		private fun parseOperations(jsonObject: Map<String, Any>): MutableMap<String, Operation> {
-			val operationsJson = jsonObject["operation"] as? List<Map<String, Any>> ?: listOf()
-
-			return operationsJson.map {
+			return jsonObject["operation"]?.let {
+				it as? List<Map<String, Any>>
+			}?.map {
 				val id = it["@id"] as String
 				val target = it["target"] as String
 				val method = it["method"] as String
@@ -206,7 +206,9 @@ class ThingParser {
 				val form = expects?.let { OperationForm(it) }
 
 				id to Operation(id, target, type, method, form)
-			}.toMap().toMutableMap()
+			}?.toMap(
+			)?.toMutableMap(
+			) ?: mutableMapOf()
 		}
 	}
 
